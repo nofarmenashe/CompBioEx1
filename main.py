@@ -1,5 +1,5 @@
 import sys
-import numpy as np
+import copy
 import random
 
 
@@ -11,10 +11,10 @@ def is_on_border(i, j):
 # Returns if one or more neighbours of location (row,column)
 # is on fire
 def surround_by_fire(forest_snapshot, row, column):
-    return (forest_snapshot[row + 1][column] is False) or \
-           (forest_snapshot[row - 1][column] is False) or \
-           (forest_snapshot[row][column + 1] is False) or \
-           (forest_snapshot[row][column - 1] is False)
+    return forest_snapshot[row + 1][column] is False or \
+           forest_snapshot[row - 1][column] is False or \
+           forest_snapshot[row][column + 1] is False or \
+           forest_snapshot[row][column - 1] is False
 
 
 # Returns true_value or false_value if probability "p" has happened
@@ -56,19 +56,28 @@ def print_forest(forest):
         print
 
 
-treeProbability = float(sys.argv[1])
-fireProbability = float(sys.argv[2])
-lightningProbability = float(sys.argv[3])
-growProbability = float(sys.argv[4])
+def question_a_initialization(forest):
+    for i in range(columns):
+        forest[i][1] = False
 
-rows, columns = 10, 10
+    return forest
+
+
+treeProbability = float(sys.argv[1])  # d param
+fireProbability = float(sys.argv[2])  # g param
+lightningProbability = float(sys.argv[3])  # f param
+growProbability = float(sys.argv[4])  # p param
+
+rows, columns = 12, 12
 
 # Each cell is None (empty) or True (tree) or False (fire)
 forest = initialize_forest(treeProbability)
 numOfIterations = 200
 
+forest = question_a_initialization(forest)
+
 for i in range(numOfIterations):
-    forestSnapshot = forest
+    forestSnapshot = copy.deepcopy(forest)
     for row in range(rows):
         for column in range(columns):
             if not is_on_border(row, column):
@@ -90,3 +99,4 @@ for i in range(numOfIterations):
                     forest[row][column] = calculate_probability(lightningProbability, False, True)
 
 print_forest(forest)
+
