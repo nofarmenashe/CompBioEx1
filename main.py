@@ -1,38 +1,16 @@
 import sys
-import copy
-import random
-
-
-# Returns if location (i,j) is on the borders of the forest
-def is_on_border(i, j):
-    return i == 0 or j == 0 or i == rows-1 or j == columns-1
-
-
-# Returns if one or more neighbours of location (row,column)
-# is on fire
-def surround_by_fire(forest_snapshot, row, column):
-    return forest_snapshot[row + 1][column] is False or \
-           forest_snapshot[row - 1][column] is False or \
-           forest_snapshot[row][column + 1] is False or \
-           forest_snapshot[row][column - 1] is False
-
-
-# Returns true_value or false_value if probability "p" has happened
-def calculate_probability(p, true_value, false_value):
-    if random.random() >= 1-p:
-        return true_value
-    return false_value
-
+from numpy import *
+import matrix
 
 # Initialize forest by tree_probability
 def initialize_forest(tree_probability):
     initialized_forest = [[0 for x in range(columns)] for y in range(rows)]
     for row in range(rows):
         for column in range(columns):
-            if is_on_border(row, column):
+            if matrix.is_on_border(row, column, rows, columns):
                 prob_value = None
             else:
-                prob_value = calculate_probability(tree_probability, True, None)
+                prob_value = matrix.calculate_probability(tree_probability, True, None)
             initialized_forest[row][column] = prob_value
 
     return initialized_forest
@@ -56,11 +34,62 @@ def print_forest(forest):
         print
 
 
+def get_number_of_trees_and_empty(forest):
+    number_of_trees = 0
+    number_of_empty_cells = 0
+    for i in range(len(forest)):
+        for j in range(len(forest[0])):
+            if forest[i][j]:
+                number_of_trees += 1
+            if forest[i][j] is None:
+                number_of_empty_cells += 1
+    return {"trees": number_of_trees, "empties": number_of_empty_cells}
+
+
+def get_global_index(forest):
+    numbers = get_number_of_trees_and_empty(forest)
+    return float(numbers["trees"]) / numbers["empties"]
+
+
+def get_local_index(forest):
+    fields_with_majority = 0
+    two_thirds_of_local_forest = (10*10)*2/3
+    for i in range(rows/10):
+        for j in range(columns/10):
+            numbers = get_number_of_trees_and_empty(array(forest)[10*i:10*(i+1), 10*j:10*(j+1)])
+            if numbers["trees"] > two_thirds_of_local_forest or \
+                    numbers["empties"] > two_thirds_of_local_forest:
+                fields_with_majority += 1
+    return fields_with_majority
+
+
 def question_a_initialization(forest):
     for i in range(columns):
         forest[i][1] = False
+    forest[0][1] = None
+    forest[rows - 1][1] = None
 
     return forest
+
+
+def simulate_question_a(forest):
+    current_fire_prob = 0
+    while current_fire_prob <= 1:
+        global_index_sum = 0
+
+        for i in range(1):
+            forest = initialize_forest(treeProbability)
+            forest = question_a_initialization(forest)
+
+            for i in range(200):
+                forest = matrix.iterate_over_forest(forest, rows, columns, current_fire_prob,
+                                                    lightningProbability, growProbability)
+
+            global_index_sum += get_global_index(forest)
+
+        average_global_index = global_index_sum / 1
+        print current_fire_prob, average_global_index
+        current_fire_prob += 0.01
 
 
 treeProbability = float(sys.argv[1])  # d param
@@ -68,35 +97,21 @@ fireProbability = float(sys.argv[2])  # g param
 lightningProbability = float(sys.argv[3])  # f param
 growProbability = float(sys.argv[4])  # p param
 
-rows, columns = 12, 12
+question = None
+if len(sys.argv) == 6:
+    question = sys.argv[5]
 
-# Each cell is None (empty) or True (tree) or False (fire)
+rows, columns = 100, 100
+
+# Each cell is None (empty) or True (tree) or False (on fire)
 forest = initialize_forest(treeProbability)
-numOfIterations = 200
 
-forest = question_a_initialization(forest)
+if question == "a":
+    simulate_question_a(forest)
 
-for i in range(numOfIterations):
-    forestSnapshot = copy.deepcopy(forest)
-    for row in range(rows):
-        for column in range(columns):
-            if not is_on_border(row, column):
+newForest = matrix.animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
+                 growProbability, forest)
 
-                # If tree is on fire, then turns empty
-                if forestSnapshot[row][column] is False:
-                    forest[row][column] = None
-
-                # If there isn't tree, then grow tree with growProbability
-                elif forestSnapshot[row][column] is None:
-                    forest[row][column] = calculate_probability(growProbability, True, None)
-
-                # If one or more neighbours is on fire, then start fire with fireProbability
-                elif surround_by_fire(forestSnapshot, row, column):
-                    forest[row][column] = calculate_probability(fireProbability, False, True)
-
-                # If none of neighbours is on fire, then start fire with lightningProbability
-                else:
-                    forest[row][column] = calculate_probability(lightningProbability, False, True)
-
-print_forest(forest)
-
+global_index = get_global_index(newForest)
+local_index = get_local_index(newForest)
+print global_index, local_index
