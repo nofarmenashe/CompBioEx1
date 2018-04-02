@@ -72,24 +72,41 @@ def question_a_initialization(forest):
     return forest
 
 
+def iterate_x_times_over_forest(fire_prob, num_of_iterations):
+    global_index_sum = 0
+
+    for i in range(num_of_iterations):
+        forest = initialize_forest(treeProbability)
+        forest = question_a_initialization(forest)
+
+        for i in range(200):
+            forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
+                                                lightningProbability, growProbability)
+
+        global_index_sum += get_global_index(forest)
+
+    return float(global_index_sum) / num_of_iterations
+
+
 def simulate_question_a(forest):
     current_fire_prob = 0
+    last_prob_with_positive_global_index = 0
+    first_prob_with_negative_global_index = 0.01
+
     while current_fire_prob <= 1:
-        global_index_sum = 0
+        average_global_index = iterate_x_times_over_forest(current_fire_prob, 3)
 
-        for i in range(1):
-            forest = initialize_forest(treeProbability)
-            forest = question_a_initialization(forest)
+        if average_global_index > 1:
+            last_prob_with_positive_global_index = current_fire_prob
+            first_prob_with_negative_global_index = last_prob_with_positive_global_index + 0.1
 
-            for i in range(200):
-                forest = matrix.iterate_over_forest(forest, rows, columns, current_fire_prob,
-                                                    lightningProbability, growProbability)
-
-            global_index_sum += get_global_index(forest)
-
-        average_global_index = global_index_sum / 1
         print current_fire_prob, average_global_index
         current_fire_prob += 0.01
+
+    while last_prob_with_positive_global_index < first_prob_with_negative_global_index:
+        average_global_index = iterate_x_times_over_forest(last_prob_with_positive_global_index, 3)
+        print last_prob_with_positive_global_index, average_global_index
+        last_prob_with_positive_global_index += 0.001
 
 
 treeProbability = float(sys.argv[1])  # d param
