@@ -5,15 +5,16 @@ from numpy import *
 import matrix
 import matplotlib.pyplot as plt
 
+
 # Initialize forest by tree_probability
-def initialize_forest(tree_probability):
+def initialize_forest():
     initialized_forest = [[0 for x in range(columns)] for y in range(rows)]
     for row in range(rows):
         for column in range(columns):
             if matrix.is_on_border(row, column, rows, columns):
                 prob_value = None
             else:
-                prob_value = matrix.calculate_probability(tree_probability, True, None)
+                prob_value = matrix.calculate_probability(treeProbability, True, None)
             initialized_forest[row][column] = prob_value
 
     return initialized_forest
@@ -66,37 +67,38 @@ def get_local_index(forest):
     return fields_with_majority
 
 
-def question_a_initialization(forest):
+def question_a_initialization():
+    init_forest = initialize_forest()
     for i in range(columns):
-        forest[i][1] = False
-    forest[0][1] = None
-    forest[rows - 1][1] = None
+        init_forest[i][1] = False
+    init_forest[0][1] = None
+    init_forest[rows - 1][1] = None
 
-    return forest
+    return init_forest
 
 
-def iterate_x_times_over_forest(fire_prob, num_of_iterations):
+def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, fire_prob, num_of_iterations):
     global_index_sum = 0
 
     for i in range(num_of_iterations):
-        forest = initialize_forest(treeProbability)
-        forest = question_a_initialization(forest)
-
+        forest = initialization_func()
         for i in range(200):
             forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
-                                                lightningProbability, growProbability)
+                                                lightning_prob, grow_prob)
 
         global_index_sum += get_global_index(forest)
 
     return float(global_index_sum) / num_of_iterations
 
 
-def update_line(hl, new_data_x, new_data_y):
-    hl.set_xdata(numpy.append(hl.get_xdata(), new_data_x))
-    hl.set_ydata(numpy.append(hl.get_ydata(), new_data_y))
+# *********************** QUESTION A ****************************
 
+def simulate_question_a():
+    global treeProbability, lightningProbability, growProbability
+    treeProbability = 1
+    lightningProbability = 0
+    growProbability = 0
 
-def simulate_question_a(forest):
     current_fire_prob = 0
     critical_point = (0, 0)
     last_prob_with_positive_global_index = 0
@@ -105,7 +107,11 @@ def simulate_question_a(forest):
     y_data = []
 
     while current_fire_prob <= 1:
-        average_global_index = iterate_x_times_over_forest(current_fire_prob, 10)
+        average_global_index = iterate_x_times_over_forest(question_a_initialization,
+                                                           lightningProbability,
+                                                           growProbability,
+                                                           current_fire_prob,
+                                                           3)
 
         if average_global_index > 1:
             last_prob_with_positive_global_index = current_fire_prob + 0.001
@@ -116,9 +122,14 @@ def simulate_question_a(forest):
         current_fire_prob += 0.1
 
     while last_prob_with_positive_global_index < first_prob_with_negative_global_index:
-        average_global_index = iterate_x_times_over_forest(last_prob_with_positive_global_index, 10)
+        average_global_index = iterate_x_times_over_forest(question_a_initialization,
+                                                           lightningProbability,
+                                                           growProbability,
+                                                           last_prob_with_positive_global_index,
+                                                           3)
         x_data.append(last_prob_with_positive_global_index)
         y_data.append(average_global_index)
+        print last_prob_with_positive_global_index, average_global_index
         last_prob_with_positive_global_index += 0.001
 
         lists = sorted(itertools.izip(*[x_data, y_data]))
@@ -127,6 +138,60 @@ def simulate_question_a(forest):
         plt.show()
 
 
+# *********************** QUESTION B ***************************
+
+def question_b_check_fire_probability():
+    global lightningProbability, growProbability, fireProbability
+
+    lightningProbability, growProbability = 0.5, 0.5
+    fireProbability = 0
+    while fireProbability <= 1:
+        average_global_index = iterate_x_times_over_forest(initialize_forest,
+                                                           lightningProbability,
+                                                           growProbability,
+                                                           fireProbability,
+                                                           3)
+        print fireProbability, average_global_index
+        fireProbability += 0.1
+
+
+def question_b_check_grow_probability():
+    global lightningProbability, growProbability, fireProbability
+
+    lightningProbability, fireProbability = 0.5, 0.5
+    growProbability = 0
+    while growProbability <= 1:
+        average_global_index = iterate_x_times_over_forest(initialize_forest,
+                                                           lightningProbability,
+                                                           growProbability,
+                                                           fireProbability,
+                                                           3)
+        print growProbability, average_global_index
+        growProbability += 0.1
+
+
+def question_b_check_lightning_probability():
+    global lightningProbability, growProbability, fireProbability
+
+    growProbability, fireProbability = 0.5, 0.5
+    lightningProbability = 0
+    while lightningProbability <= 1:
+        average_global_index = iterate_x_times_over_forest(initialize_forest,
+                                                           lightningProbability,
+                                                           growProbability,
+                                                           fireProbability,
+                                                           3)
+        print lightningProbability, average_global_index
+        lightningProbability += 0.1
+
+
+def simulate_question_b():
+    global treeProbability
+    treeProbability = 0.5
+
+    question_b_check_fire_probability()
+    question_b_check_grow_probability()
+    question_b_check_lightning_probability()
 
 
 treeProbability = float(sys.argv[1])  # d param
@@ -141,10 +206,13 @@ if len(sys.argv) == 6:
 rows, columns = 100, 100
 
 # Each cell is None (empty) or True (tree) or False (on fire)
-forest = initialize_forest(treeProbability)
+forest = initialize_forest()
 
 if question == "a":
-    simulate_question_a(forest)
+    simulate_question_a()
+
+if question == "b":
+    simulate_question_b()
 
 newForest = matrix.animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
                  growProbability, forest)
