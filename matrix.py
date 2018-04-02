@@ -16,7 +16,7 @@ def convert_matrix(dims, algo_matrix):
             if algo_matrix[i][j] is None:
                 m[i, j] = 2
             elif not algo_matrix[i][j]:
-                m[i, j] = 1
+                 m[i, j] = 1
             else:
                 m[i, j] = 3
     return m
@@ -25,9 +25,7 @@ def convert_matrix(dims, algo_matrix):
 def get_display_matrix(dims, ax, algo_matrix):
     color_map = {1: 'red', 2: 'white', 3: 'green'}
     labels = {1: 'fire', 2: 'empty', 3: 'tree'}
-
-    mat_show = ax.matshow(convert_matrix(dims, algo_matrix), cmap=colors.ListedColormap(color_map.values()), aspect="auto")
-
+    mat_show = ax.matshow(convert_matrix(dims, algo_matrix), vmin=1, vmax=3, cmap=colors.ListedColormap(color_map.values()), aspect="auto")
     patches = [mpatches.Patch(color=color_map[i], label=labels[i]) for i in color_map]
     plt.legend(handles=patches, loc='upper center', bbox_to_anchor=(0.5, -0.005),
                fancybox=True, shadow=True, ncol=3)
@@ -100,7 +98,6 @@ def animation_execution(rows, columns, treeProbability, fireProbability, lightni
 
     treeProb, fireProb, lightningProb, growProb = (treeProbability, fireProbability,
                                                    lightningProbability, growProbability)
-
     dims = (rows, columns)
     grid = forest
     fig, ax = plt.subplots()
@@ -108,5 +105,4 @@ def animation_execution(rows, columns, treeProbability, fireProbability, lightni
     anim = animation.FuncAnimation(fig, animate, frames=200,
                                    interval=1, repeat=False)
     plt.show()
-
     return grid
