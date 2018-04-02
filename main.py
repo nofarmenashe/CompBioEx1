@@ -1,6 +1,9 @@
 import sys
+import itertools
+import numpy
 from numpy import *
 import matrix
+import matplotlib.pyplot as plt
 
 # Initialize forest by tree_probability
 def initialize_forest(tree_probability):
@@ -88,25 +91,42 @@ def iterate_x_times_over_forest(fire_prob, num_of_iterations):
     return float(global_index_sum) / num_of_iterations
 
 
+def update_line(hl, new_data_x, new_data_y):
+    hl.set_xdata(numpy.append(hl.get_xdata(), new_data_x))
+    hl.set_ydata(numpy.append(hl.get_ydata(), new_data_y))
+
+
 def simulate_question_a(forest):
     current_fire_prob = 0
+    critical_point = (0, 0)
     last_prob_with_positive_global_index = 0
     first_prob_with_negative_global_index = 0.01
+    x_data = []
+    y_data = []
 
     while current_fire_prob <= 1:
-        average_global_index = iterate_x_times_over_forest(current_fire_prob, 3)
+        average_global_index = iterate_x_times_over_forest(current_fire_prob, 10)
 
         if average_global_index > 1:
-            last_prob_with_positive_global_index = current_fire_prob
-            first_prob_with_negative_global_index = last_prob_with_positive_global_index + 0.1
+            last_prob_with_positive_global_index = current_fire_prob + 0.001
+            first_prob_with_negative_global_index = last_prob_with_positive_global_index + 0.01
 
-        print current_fire_prob, average_global_index
-        current_fire_prob += 0.01
+        x_data.append(current_fire_prob)
+        y_data.append(average_global_index)
+        current_fire_prob += 0.1
 
     while last_prob_with_positive_global_index < first_prob_with_negative_global_index:
-        average_global_index = iterate_x_times_over_forest(last_prob_with_positive_global_index, 3)
-        print last_prob_with_positive_global_index, average_global_index
+        average_global_index = iterate_x_times_over_forest(last_prob_with_positive_global_index, 10)
+        x_data.append(last_prob_with_positive_global_index)
+        y_data.append(average_global_index)
         last_prob_with_positive_global_index += 0.001
+
+        lists = sorted(itertools.izip(*[x_data, y_data]))
+        x_data, y_data = list(itertools.izip(*lists))
+        plt.plot(x_data, y_data)
+        plt.show()
+
+
 
 
 treeProbability = float(sys.argv[1])  # d param
