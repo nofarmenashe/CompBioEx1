@@ -1,6 +1,4 @@
 import sys
-import itertools
-import numpy
 from numpy import *
 import matrix
 import matrix_extended_model
@@ -82,6 +80,10 @@ def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, 
     global_index_sum = 0
     number_of_frames = 200
 
+    x_data = []
+    y1_data = []
+    y2_data = []
+
     for i in range(num_of_iterations):
         forest = initialization_func()
         global_index_sum_per_iteration = 0
@@ -90,15 +92,27 @@ def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, 
         for i in range(number_of_frames):
             forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
                                                 lightning_prob, grow_prob)
-            print "global: " + str(get_global_index(forest))
-            print "locals: " + str(get_local_index(forest))
             global_index_sum_per_iteration += get_global_index(forest)
             local_index_sum_per_iteration += get_local_index(forest)
+
+            x_data.append(i)
+            y1_data.append(get_global_index(forest))
+            y2_data.append(get_local_index(forest))
+
+        global_index_sum += get_global_index(forest)
 
         print float(global_index_sum_per_iteration) / number_of_frames
         print float(local_index_sum_per_iteration) / number_of_frames
 
-        global_index_sum += get_global_index(forest)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x_data, y1_data, 'b-', label="global index")
+    ax.tick_params('y', color="blue")
+    ax2 = ax.twinx()
+    ax2.plot(x_data, y2_data, 'r-', label="local fields")
+    ax2.tick_params('y', color="red")
+
+    fig.tight_layout()
 
     return float(global_index_sum) / num_of_iterations
 
@@ -106,6 +120,7 @@ def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, 
 # *********************** QUESTION A ****************************
 
 def simulate_question_a():
+    # Set probabilities
     global treeProbability, lightningProbability, growProbability
     treeProbability = 1
     lightningProbability = 0
@@ -117,32 +132,40 @@ def simulate_question_a():
     x_data = []
     y_data = []
 
+    # Run on fire probability in range 0 to 1 in jumps of 0.01
     while current_fire_prob <= 1:
         average_global_index = iterate_x_times_over_forest(question_a_initialization,
                                                            lightningProbability,
                                                            growProbability,
                                                            current_fire_prob,
-                                                           3)
+                                                           10)
 
+        # Find the first probability which get negative global index
         if average_global_index > 1:
-            last_prob_with_positive_global_index = current_fire_prob + 0.001
             first_prob_with_negative_global_index = last_prob_with_positive_global_index + 0.01
+            last_prob_with_positive_global_index = current_fire_prob + 0.001
 
+        # Add new data to graph
         x_data.append(current_fire_prob)
         y_data.append(average_global_index)
-        current_fire_prob += 0.1
 
+        current_fire_prob += 0.01
+
+    # Make another iteration to get approximated value
     while last_prob_with_positive_global_index < first_prob_with_negative_global_index:
         average_global_index = iterate_x_times_over_forest(question_a_initialization,
                                                            lightningProbability,
                                                            growProbability,
                                                            last_prob_with_positive_global_index,
-                                                           3)
+                                                           10)
+
+        # Add new data to graph
         x_data.append(last_prob_with_positive_global_index)
         y_data.append(average_global_index)
-        print last_prob_with_positive_global_index, average_global_index
+
         last_prob_with_positive_global_index += 0.001
 
+        # Print graph
         lists = sorted(itertools.izip(*[x_data, y_data]))
         x_data, y_data = list(itertools.izip(*lists))
         plt.plot(x_data, y_data)
@@ -153,8 +176,11 @@ def simulate_question_a():
 
 def question_b_check_fire_probability():
     global lightningProbability, growProbability, fireProbability
+    x_data = []
+    y_data = []
 
     lightningProbability, growProbability = 0.5, 0.5
+
     fireProbability = 0
     while fireProbability <= 1:
         average_global_index = iterate_x_times_over_forest(initialize_forest,
@@ -162,14 +188,24 @@ def question_b_check_fire_probability():
                                                            growProbability,
                                                            fireProbability,
                                                            3)
-        print fireProbability, average_global_index
+        x_data.append(fireProbability)
+        y_data.append(average_global_index)
         fireProbability += 0.1
+
+    # Print graph
+    fig_fire = plt.figure()
+    ax = fig_fire.add_subplot(111)
+    ax.plot(x_data, y_data)
+    plt.xlabel("fire probability")
 
 
 def question_b_check_grow_probability():
     global lightningProbability, growProbability, fireProbability
+    x_data = []
+    y_data = []
 
     lightningProbability, fireProbability = 0.5, 0.5
+
     growProbability = 0
     while growProbability <= 1:
         average_global_index = iterate_x_times_over_forest(initialize_forest,
@@ -177,14 +213,24 @@ def question_b_check_grow_probability():
                                                            growProbability,
                                                            fireProbability,
                                                            3)
-        print growProbability, average_global_index
+        x_data.append(growProbability)
+        y_data.append(average_global_index)
         growProbability += 0.1
+
+    # Print graph
+    fig_grow = plt.figure()
+    ax = fig_grow.add_subplot(111)
+    ax.plot(x_data, y_data)
+    plt.xlabel("grow probability")
 
 
 def question_b_check_lightning_probability():
     global lightningProbability, growProbability, fireProbability
+    x_data = []
+    y_data = []
 
     growProbability, fireProbability = 0.5, 0.5
+
     lightningProbability = 0
     while lightningProbability <= 1:
         average_global_index = iterate_x_times_over_forest(initialize_forest,
@@ -192,8 +238,15 @@ def question_b_check_lightning_probability():
                                                            growProbability,
                                                            fireProbability,
                                                            3)
-        print lightningProbability, average_global_index
+        x_data.append(lightningProbability)
+        y_data.append(average_global_index)
         lightningProbability += 0.1
+
+    # Print graph
+    fig_lightning = plt.figure()
+    ax = fig_lightning.add_subplot(111)
+    ax.plot(x_data, y_data)
+    plt.xlabel("lightning probability")
 
 
 def simulate_question_b():
