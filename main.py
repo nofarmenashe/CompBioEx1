@@ -3,6 +3,7 @@ import itertools
 import numpy
 from numpy import *
 import matrix
+import matrix_extended_model
 import matplotlib.pyplot as plt
 
 
@@ -79,14 +80,23 @@ def question_a_initialization():
 
 def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, fire_prob, num_of_iterations):
     global_index_sum = 0
+    number_of_frames = 200
 
     for i in range(num_of_iterations):
         forest = initialization_func()
-        for i in range(200):
+        global_index_sum_per_iteration = 0
+        local_index_sum_per_iteration = 0
+
+        for i in range(number_of_frames):
             forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
                                                 lightning_prob, grow_prob)
             print "global: " + str(get_global_index(forest))
             print "locals: " + str(get_local_index(forest))
+            global_index_sum_per_iteration += get_global_index(forest)
+            local_index_sum_per_iteration += get_local_index(forest)
+
+        print float(global_index_sum_per_iteration) / number_of_frames
+        print float(local_index_sum_per_iteration) / number_of_frames
 
         global_index_sum += get_global_index(forest)
 
@@ -102,7 +112,6 @@ def simulate_question_a():
     growProbability = 0
 
     current_fire_prob = 0
-    critical_point = (0, 0)
     last_prob_with_positive_global_index = 0
     first_prob_with_negative_global_index = 0.01
     x_data = []
@@ -196,9 +205,21 @@ def simulate_question_b():
     question_b_check_lightning_probability()
 
 
+# *********************** QUESTION D ***************************
+
 def simulate_question_d():
     iterate_x_times_over_forest(initialize_forest, lightningProbability,
                                 growProbability, fireProbability, 1)
+
+
+# *********************** QUESTION E ***************************
+
+def simulate_question_e():
+    question_forest = initialize_forest()
+    matrix_extended_model.animation_execution(rows, columns, treeProbability,
+                                              fireProbability, lightningProbability,
+                                              growProbability, question_forest)
+
 
 treeProbability = float(sys.argv[1])  # d param
 fireProbability = float(sys.argv[2])  # g param
@@ -217,15 +238,18 @@ forest = initialize_forest()
 if question == "a":
     simulate_question_a()
 
-if question == "b":
+elif question == "b":
     simulate_question_b()
 
-if question == "d":
+elif question == "d":
     simulate_question_d()
 
-newForest = matrix.animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
-                 growProbability, forest)
+elif question == "e":
+    simulate_question_e()
 
-global_index = get_global_index(newForest)
-local_index = get_local_index(newForest)
-print global_index, local_index
+else:
+    newForest = matrix.animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
+                                           growProbability, forest)
+    global_index = get_global_index(newForest)
+    local_index = get_local_index(newForest)
+    print global_index, local_index
