@@ -38,6 +38,7 @@ def print_forest(forest):
         print
 
 
+# count number of empty cells and tree cells - for index
 def get_number_of_trees_and_empty(forest):
     number_of_trees = 0
     number_of_empty_cells = 0
@@ -57,16 +58,49 @@ def get_global_index(forest):
 
 def get_local_index(forest):
     fields_with_majority = 0
-    two_thirds_of_local_forest = (10*10)*2/3
-    for i in range(rows/10):
-        for j in range(columns/10):
-            numbers = get_number_of_trees_and_empty(array(forest)[10*i:10*(i+1), 10*j:10*(j+1)])
+    two_thirds_of_local_forest = (10 * 10) * 2 / 3
+    for i in range(rows / 10):
+        for j in range(columns / 10):
+            # get index for local part of forest
+            numbers = get_number_of_trees_and_empty(array(forest)[10 * i:10 * (i + 1), 10 * j:10 * (j + 1)])
             if numbers["trees"] > two_thirds_of_local_forest or \
                     numbers["empties"] > two_thirds_of_local_forest:
                 fields_with_majority += 1
     return fields_with_majority
 
 
+# perform x life cycles (200 generations) of simulation
+def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, fire_prob, num_of_iterations):
+    global_index_sum = 0
+    x_data = []
+    y1_data = []
+    y2_data = []
+
+    for i in range(num_of_iterations):
+        forest = initialization_func()
+        for j in range(200):  # 1 life cycle
+            forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
+                                                lightning_prob, grow_prob) # update forest board
+            x_data.append(j)
+            y1_data.append(get_global_index(forest))
+            y2_data.append(get_local_index(forest))
+
+        global_index_sum += get_global_index(forest)
+
+    if question == "d":  # show graph of local and global indices
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(x_data, y1_data, 'b-', label="global index")
+        ax.tick_params('y', colors="blue")
+        ax2 = ax.twinx()
+        ax2.plot(x_data, y2_data, 'r-', label="local fields")
+        ax2.tick_params('y', colors="red")
+        fig.tight_layout()
+
+    return float(global_index_sum) / num_of_iterations
+
+
+# *********************** QUESTION A ****************************
 def question_a_initialization():
     init_forest = initialize_forest()
     for i in range(columns):
@@ -77,38 +111,6 @@ def question_a_initialization():
     return init_forest
 
 
-def iterate_x_times_over_forest(initialization_func, lightning_prob, grow_prob, fire_prob, num_of_iterations):
-    global_index_sum = 0
-    x_data = []
-    y1_data = []
-    y2_data = []
-
-    for i in range(num_of_iterations):
-        forest = initialization_func()
-        for i in range(200):
-            forest = matrix.iterate_over_forest(forest, rows, columns, fire_prob,
-                                                lightning_prob, grow_prob)
-            x_data.append(i)
-            y1_data.append(get_global_index(forest))
-            y2_data.append(get_local_index(forest))
-            # print "locals: " + str(get_local_index(forest))
-
-        global_index_sum += get_global_index(forest)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(x_data, y1_data, 'b-', label="global index")
-    ax.tick_params('y', color="blue")
-    ax2 = ax.twinx()
-    ax2.plot(x_data, y2_data, 'r-', label="local fields")
-    ax2.tick_params('y', color="red")
-
-
-    fig.tight_layout()
-    return float(global_index_sum) / num_of_iterations
-
-
-# *********************** QUESTION A ****************************
-
 def simulate_question_a():
     global treeProbability, lightningProbability, growProbability
     treeProbability = 1
@@ -116,18 +118,17 @@ def simulate_question_a():
     growProbability = 0
 
     current_fire_prob = 0
-    critical_point = (0, 0)
     last_prob_with_positive_global_index = 0
     first_prob_with_negative_global_index = 0.01
     x_data = []
     y_data = []
 
-    while current_fire_prob <= 1:
+    while current_fire_prob <= 1:  # get global index for all fire probabilities between 0 to 1
         average_global_index = iterate_x_times_over_forest(question_a_initialization,
                                                            lightningProbability,
                                                            growProbability,
                                                            current_fire_prob,
-                                                           10)
+                                                           3)
 
         if average_global_index > 1:
             last_prob_with_positive_global_index = current_fire_prob + 0.001
@@ -138,11 +139,12 @@ def simulate_question_a():
         current_fire_prob += 0.01
 
     while last_prob_with_positive_global_index < first_prob_with_negative_global_index:
+        # get more accurate values near critical point
         average_global_index = iterate_x_times_over_forest(question_a_initialization,
                                                            lightningProbability,
                                                            growProbability,
                                                            last_prob_with_positive_global_index,
-                                                           10)
+                                                           3)
         x_data.append(last_prob_with_positive_global_index)
         y_data.append(average_global_index)
         print last_prob_with_positive_global_index, average_global_index
@@ -233,6 +235,8 @@ def simulate_question_b():
     question_b_check_lightning_probability()
 
 
+# *********************** QUESTION D ***************************
+
 def simulate_question_d():
     iterate_x_times_over_forest(initialize_forest, lightningProbability,
                                 growProbability, fireProbability, 1)
@@ -252,6 +256,7 @@ rows, columns = 100, 100
 # Each cell is None (empty) or True (tree) or False (on fire)
 forest = initialize_forest()
 
+
 if question == "a":
     simulate_question_a()
 
@@ -261,8 +266,9 @@ if question == "b":
 if question == "d":
     simulate_question_d()
 
+# show graphic board of simulation
 newForest = matrix.animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
-                 growProbability, forest)
+                                       growProbability, forest)
 
 global_index = get_global_index(newForest)
 local_index = get_local_index(newForest)

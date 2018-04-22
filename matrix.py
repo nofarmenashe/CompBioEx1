@@ -9,6 +9,7 @@ grid = np.zeros(dims)
 treeProb, fireProb, lightningProb, growProb = 0, 0, 0, 0
 
 
+# change matrix values to appropriate color number
 def convert_matrix(dims, algo_matrix):
     m = np.zeros(dims)
     for i in range(dims[0]):
@@ -16,12 +17,13 @@ def convert_matrix(dims, algo_matrix):
             if algo_matrix[i][j] is None:
                 m[i, j] = 2
             elif not algo_matrix[i][j]:
-                 m[i, j] = 1
+                m[i, j] = 1
             else:
                 m[i, j] = 3
     return m
 
 
+# configure graphic matrix
 def get_display_matrix(dims, ax, algo_matrix):
     color_map = {1: 'red', 2: 'white', 3: 'green'}
     labels = {1: 'fire', 2: 'empty', 3: 'tree'}
@@ -37,6 +39,7 @@ def get_display_matrix(dims, ax, algo_matrix):
     return mat_show
 
 
+# update forest (for one generation)
 def animate(data):
         global grid
         newGrid = iterate_over_forest(grid, dims[0], dims[1], fireProb, lightningProb, growProb)
@@ -68,6 +71,7 @@ def calculate_probability(p, true_value, false_value):
     return false_value
 
 
+# update forest values
 def iterate_over_forest(forest, rows, columns, fire_probability, lightning_probability, grow_probability):
     forestSnapshot = copy.deepcopy(forest)
     for row in range(rows):
@@ -90,6 +94,7 @@ def iterate_over_forest(forest, rows, columns, fire_probability, lightning_proba
                 else:
                     forest[row][column] = calculate_probability(lightning_probability, False, True)
     return forest
+
 
 def animation_execution(rows, columns, treeProbability, fireProbability, lightningProbability,
                  growProbability, forest):
